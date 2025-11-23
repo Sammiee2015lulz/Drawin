@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Drawing Platform — MEGA UPGRADE</title>
+<style>
+  body { margin: 0; font-family: Arial, sans-serif; background:#111; color:white; }
+  #toolbar { display: flex; flex-wrap: wrap; background: #222; padding: 10px; gap: 10px; position:sticky; top:0; }
+  canvas { border: 2px solid #444; display: block; margin: 0 auto; background:white; }
+  #rooms, #galleries, #market, #stats { padding:20px; }
+  h2 { color:#0ff; }
+</style>
+</head>
+<body>
+
+<input type="file" id="musicFile" accept="audio/*">
+
+<div id="toolbar">
+  <!-- Brush Tools -->
+  <select id="brushType">
+    <option value="pen">Pen</option>
+    <option value="marker">Marker</option>
+    <option value="pencil">Pencil</option>
+    <option value="spray">Spray</option>
+    <option value="eraser">Eraser</option>
+    <option value="neon">Neon</option>
+    <option value="glow">Glow</option>
+    <option value="pixel">Pixel</option>
+  </select>
+
+  <input type="color" id="colorPicker" value="#000000">
+  <input type="range" id="brushSize" min="1" max="60" value="5">
+
+  <button id="undoBtn">Undo</button>
+  <button id="redoBtn">Redo</button>
+
+  <!-- Shapes -->
+  <button id="rectBtn">Rect</button>
+  <button id="circleBtn">Circle</button>
+  <button id="lineBtn">Line</button>
+  <button id="textBtn">Text</button>
+
+  <!-- Layers -->
+  <button id="addLayerBtn">Add Layer</button>
+  <select id="layerSelect"></select>
+
+  <!-- AI Tools -->
+  <button id="aiColorBtn">AI Auto‑Color</button>
+  <button id="aiUpscaleBtn">AI Upscale</button>
+  <button id="aiFinishBtn">AI Suggest</button>
+
+  <!-- Effects -->
+  <select id="effectSelect">
+    <option value="none">No Effect</option>
+    <option value="grayscale">Grayscale</option>
+    <option value="invert">Invert</option>
+    <option value="blur">Blur</option>
+  </select>
+
+  <!-- Voice Tools -->
+  <button id="voiceBtn">🎤 Voice</button>
+  <button id="musicBtn">🎧 Music Mode</button>
+
+  <!-- Export -->
+  <button id="saveBtn">Save</button>
+  <button id="exportBtn">Export PNG</button>
+  <!-- Themes -->
+  <select id="themeSelect">
+    <option value="dark">Dark</option>
+    <option value="pastel">Pastel</option>
+    <option value="cyber">Cyberpunk</option>
+    <option value="retro">Retro 2000s</option>
+    <option value="light">Light</option>
+  </select>
+
+</div>
+
+<canvas id="canvas" width="900" height="600"></canvas>
+
+<!-- ROOMS -->
+<div id="rooms">
+  <h2>🌐 Public Drawing Rooms</h2>
+  <button>Anime Room</button>
+  <button>Realistic Art</button>
+  <button>Pixel Art</button>
+  <button>18+ (Blurred for minors)</button>
+</div>
+
+<!-- GALLERIES -->
+<div id="galleries">
+  <h2>🖼️ Art Galleries</h2>
+  <p>Most Liked • Fresh Artists • Rising Stars • Masterpieces Hall</p>
+</div>
+
+<!-- MARKETPLACE -->
+<div id="market">
+  <h2>🛒 Marketplace</h2>
+  <p>Sell brushes • Sell palettes • Sell art • Earn badges</p>
+</div>
+
+<!-- STATS -->
+<div id="stats">
+  <h2>📊 Artist Stats Dashboard</h2>
+  <p>Likes | Followers | Views | Streak | Top Art</p>
+</div>
+
+<script>
+/* --- BASIC DRAWING ENGINE --- */
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let isDrawing = false;
+let brushType = 'pen';
+let brushColor = '#000';
+let brushSize = 5;
+let lastX = 0, lastY = 0;
+
+canvas.addEventListener('mousedown', e => {
+  isDrawing = true;
+  lastX = e.offsetX;
+  lastY = e.offsetY;
+  saveHistory();
+});
+canvas.addEventListener('mouseup', () => isDrawing = false);
+canvas.addEventListener('mousemove', draw);
+
+function draw(e){
+  if(!isDrawing) return;
+
+  ctx.lineWidth = brushSize;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = brushColor;
+  ctx.fillStyle = brushColor;
+
+  if(brushType === 'neon') ctx.shadowColor = brushColor, ctx.shadowBlur = 20;
+  else ctx.shadowBlur = 0;
+
+  ctx.beginPath();
+  ctx.moveTo(lastX,lastY);
+  ctx.lineTo(e.offsetX,e.offsetY);
+  ctx.stroke();
+
+  lastX = e.offsetX;
+  lastY = e.offsetY;
+}
+
+/* --- HISTORY / UNDO REDO --- */
+let history = [], redoList = [];
+function saveHistory(){
+  history.push(ctx.getImageData(0,0,canvas.width,canvas.height));
+}
+
+document.getElementById('undoBtn').onclick=()=>{
+  if(history.length===0) return;
+  redoList.push(ctx.getImageData(0,0,canvas.width,canvas.height));
+  let img = history.pop();
+  ctx.putImageData(img, 0, 0);
+};
+
+document.getElementById('redoBtn').onclick=()=>{
+  if(redoList.length===0) return;
+  let img = redoList.pop();
+  ctx.putImageData(img, 0, 0);
+};
+
+/* --- BRUSH SETTINGS --- */
+document.getElementById('brushType').onchange=e=>brushType=e.target.value;
+document.getElementById('brushSize').oninput=e=>brushSize=e.target.value;
+document.getElementById('colorPicker').oninput=e=>brushColor=e.target.value;
+
+/* --- AI TOOLS (PLACEHOLDERS) --- */
+document.getElementById('aiColorBtn').onclick=()=>alert("AI Auto‑Color coming soon");
+document.getElementById('aiUpscaleBtn').onclick=()=>alert("AI Upscale coming soon");
+document.getElementById('aiFinishBtn').onclick=()=>alert("AI Suggest coming soon");
+
+/* --- VOICE CONTROL --- */
+let recognition;
+document.getElementById('voiceBtn').onclick = () => {
+  if(!('webkitSpeechRecognition' in window)) return alert('Not supported');
+  recognition = new webkitSpeechRecognition();
+  recognition.continuous = true;
+  recognition.onresult = event => {
+    let cmd = event.results[event.results.length-1][0].transcript.toLowerCase();
+    if(cmd.includes('red')) brushColor = '#ff0000';
+    if(cmd.includes('blue')) brushColor = '#0000ff';
+    if(cmd.includes('bigger')) brushSize++;
+    if(cmd.includes('smaller')) brushSize--;
+    if(cmd.includes('undo')) document.getElementById('undoBtn').click();
+  };
+  recognition.start();
+};
+
+/* --- MUSIC MODE (placeholder) --- */
+document.getElementById('musicBtn').onclick = ()=>alert('Music Reactive Brushes coming soon');
+
+/* --- SAVE / EXPORT --- */
+document.getElementById('exportBtn').onclick = () => {
+  let a=document.createElement('a');
+  a.download='art.png';
+  a.href=canvas.toDataURL();
+  a.click();
+};
+/* --- THEMES SYSTEM --- */
+const themeSelect = document.getElementById('themeSelect');
+const body = document.body;
+
+const themes = {
+  dark: { background:'#111', text:'white' },
+  pastel: { background:'#ffeef5', text:'#443355' },
+  cyber: { background:'#050010', text:'#0ff' },
+  retro: { background:'#f5f5dc', text:'#333' },
+  light: { background:'#ffffff', text:'#000' }
+};
+
+themeSelect.onchange = () => {
+  let t = themes[themeSelect.value];
+  body.style.background = t.background;
+  body.style.color = t.text;
+  document.getElementById('toolbar').style.background = t.background;
+};
+
+</script>
+
+</body>
+</html>
